@@ -5,14 +5,24 @@ import pandas as pd
 import math
 from .model import Pilgrim
 
+
 class Trainer:
-    def __init__(self, 
-                 net, num_epochs, device, 
-                 batch_size=10000, lr=0.001, name="", K_min=1, K_max=55, 
-                 all_moves=None, inverse_moves=None, V0=None, 
-                 optimizer='Adam', # Adam or AdamSF
-                 α=0.001, # Not supported for this branch
-                ):
+    def __init__(
+        self,
+        net,
+        num_epochs,
+        device,
+        batch_size=10000,
+        lr=0.001,
+        name="",
+        K_min=1,
+        K_max=55,
+        all_moves=None,
+        inverse_moves=None,
+        V0=None,
+        optimizer="Adam",  # Adam or AdamSF
+        α=0.001,  # Not supported for this branch
+    ):
         self.net = net.to(device)
         self.α = α
         self.lr = lr
@@ -39,8 +49,12 @@ class Trainer:
 
     def do_random_step(self, states, last_moves):
         """Perform a random step while avoiding inverse moves."""
-        possible_moves = torch.ones((states.size(0), self.n_gens), dtype=torch.bool, device=self.device)
-        possible_moves[torch.arange(states.size(0)), self.inverse_moves[last_moves]] = False
+        possible_moves = torch.ones(
+            (states.size(0), self.n_gens), dtype=torch.bool, device=self.device
+        )
+        possible_moves[torch.arange(states.size(0)), self.inverse_moves[last_moves]] = (
+            False
+        )
         next_moves = torch.multinomial(possible_moves.float(), 1).squeeze()
         new_states = torch.gather(states, 1, self.all_moves[next_moves])
         return new_states, next_moves
@@ -54,23 +68,25 @@ class Trainer:
         for t in range(K_max):
             cutoff = 0 if t < K_min else k * (t - K_min + 1)
             if cutoff < total:
-                states[cutoff:], last_moves[cutoff:] = self.do_random_step(states[cutoff:], last_moves[cutoff:])
+                states[cutoff:], last_moves[cutoff:] = self.do_random_step(
+                    states[cutoff:], last_moves[cutoff:]
+                )
             else:
                 break
         perm = torch.randperm(total, device=self.device)
         return states[perm], Y[perm]
-        
+
     def _train_epoch(self, X, Y):
         self.net.train()
         avg_loss = 0.0
         total_batches = X.size(0) // self.batch_size
-        
+
         for i in range(0, X.size(0), self.batch_size):
-            data = X[i:i + self.batch_size]
-            target = Y[i:i + self.batch_size]
+            data = X[i : i + self.batch_size]
+            target = Y[i : i + self.batch_size]
             output = self.net(data)
             loss = self.criterion(output, target)
-            
+
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -85,7 +101,9 @@ class Trainer:
 
             # Data generation
             data_gen_start = time.time()
-            X, Y = self.generate_random_walks(k=self.walkers_num, K_min=self.K_min, K_max=self.K_max)
+            X, Y = self.generate_random_walks(
+                k=self.walkers_num, K_min=self.K_min, K_max=self.K_max
+            )
             data_gen_time = time.time() - data_gen_start
 
             # Training step
@@ -95,29 +113,43 @@ class Trainer:
 
             # Log training data
             log_file = f"{self.log_dir}/train_{self.name}_{self.id}.csv"
-            log_data = pd.DataFrame([{
-                'epoch': self.epoch, 
-                'train_loss': train_loss, 
-                'vertices_seen': X.size(0),
-                'data_gen_time': data_gen_time,
-                'train_epoch_time': epoch_time
-            }])
-            log_data.to_csv(log_file, mode='a', header=not os.path.exists(log_file), index=False)
+            log_data = pd.DataFrame(
+                [
+                    {
+                        "epoch": self.epoch,
+                        "train_loss": train_loss,
+                        "vertices_seen": X.size(0),
+                        "data_gen_time": data_gen_time,
+                        "train_epoch_time": epoch_time,
+                    }
+                ]
+            )
+            log_data.to_csv(
+                log_file, mode="a", header=not os.path.exists(log_file), index=False
+            )
 
             # Save weights on powers of two
             if (self.epoch & (self.epoch - 1)) == 0:
-                weights_file = f"{self.weights_dir}/{self.name}_{self.id}_e{self.epoch:05d}.pth"
+                weights_file = (
+                    f"{self.weights_dir}/{self.name}_{self.id}_e{self.epoch:05d}.pth"
+                )
                 torch.save(self.net.state_dict(), weights_file)
 
                 # Print saving information with timestamp and train loss
-                timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-                print(f"[{timestamp}] Saved weights at epoch {self.epoch:5d}. Train Loss: {train_loss:.2f}")
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(
+                    f"[{timestamp}] Saved weights at epoch {self.epoch:5d}. Train Loss: {train_loss:.2f}"
+                )
 
         # Save final weights
         if (self.epoch & (self.epoch - 1)) != 0:
-            final_weights_file = f"{self.weights_dir}/{self.name}_{self.id}_e{self.epoch:05d}.pth"
+            final_weights_file = (
+                f"{self.weights_dir}/{self.name}_{self.id}_e{self.epoch:05d}.pth"
+            )
             torch.save(self.net.state_dict(), final_weights_file)
 
         # Print final saving information
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-        print(f"[{timestamp}] Finished. Saved final weights at epoch {self.epoch}. Train Loss: {train_loss:.2f}.")
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        print(
+            f"[{timestamp}] Finished. Saved final weights at epoch {self.epoch}. Train Loss: {train_loss:.2f}."
+        )

@@ -24,9 +24,9 @@ Requires Python 3.10+ and PyTorch.
 
 The method:
 
-* Uses beam search guided by neural network predictions.
-* Achieves optimality rates exceeding 98% for the 3x3x3 Rubik’s cube.
-* Outperforms competitors on larger cubes (4x4x4, 5x5x5) significantly.
+- Uses beam search guided by neural network predictions.
+- Achieves optimality rates exceeding 98% for the 3x3x3 Rubik’s cube.
+- Outperforms competitors on larger cubes (4x4x4, 5x5x5) significantly.
 
 ## Performance Highlights
 
@@ -35,7 +35,6 @@ The method:
 | Cube 3x3x3 | DeepCubeA (QTM) | 20.7                 |
 | Cube 4x4x4 | Santa 2023      | 46.5                 |
 | Cube 5x5x5 | Santa 2023      | 92.2                 |
-
 
 ## Training Your Model
 
@@ -63,12 +62,11 @@ Replace `{MODEL_ID}` with the numeric identifier found in the logs.
 
 To add your puzzle:
 
-* Define puzzle moves in the `generators` folder as `pXXX.json`.
-* Add target states as tensors (`t000.pt`, `t001.pt`, etc.) in the `targets` folder.
-* Add scramble datasets (2D tensor, each row a scramble) to the `datasets` folder.
+- Define puzzle moves in the `generators` folder as `pXXX.json`.
+- Add target states as tensors (`t000.pt`, `t001.pt`, etc.) in the `targets` folder.
+- Add scramble datasets (2D tensor, each row a scramble) to the `datasets` folder.
 
 Multiple target states (`t000`, `t001`, ...) are supported for each puzzle group.
-
 
 ## Testing Pre-trained Models
 
@@ -97,7 +95,6 @@ python test.py --group_id 3 --target_id 0 --tests_num 3 --dataset santa --num_st
 ```bash
 python test.py --group_id 54 --target_id 0 --tests_num 3 --dataset deepcubea --num_steps 100 --verbose 1 --epoch 8192 --model_id 333 --B 262144 --device_id 0
 ```
-
 
 ## Available Groups and Kmax
 
@@ -143,6 +140,5 @@ python test.py --group_id 54 --target_id 0 --tests_num 3 --dataset deepcubea --n
 | 052      | Pancake 50                    |
 | 053      | Pancake 55                    |
 | 054      | Cube 3x3x3 (DeepCubeA metric) |
-
 
 For more details and advanced usage, refer to the associated [research paper](https://www.arxiv.org/pdf/2502.13266).
