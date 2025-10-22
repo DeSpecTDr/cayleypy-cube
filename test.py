@@ -4,7 +4,7 @@ import os
 import time
 
 import torch
-from pilgrim import Pilgrim, Searcher, generate_inverse_moves
+from pilgrim import Pilgrim, Searcher
 
 
 def main():
@@ -65,10 +65,10 @@ def main():
         info = json.load(json_file)
 
     # Set device (GPU if available, otherwise CPU)
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else "cpu", args.device_id
-    )
-    #     device = torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda", args.device_id)
+    else:
+        device = torch.device("cpu")
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print(f"[{timestamp}] Start testing with {device}.")
 
@@ -92,9 +92,9 @@ def main():
     print(f"  state size     {state_size}")
 
     # Generate inverse moves
-    inverse_moves = torch.tensor(
-        generate_inverse_moves(move_names), dtype=torch.int64, device=device
-    )
+    # inverse_moves = torch.tensor(
+    #     generate_inverse_moves(move_names), dtype=torch.int64, device=device
+    # )
 
     # Load model and weights
     model = Pilgrim(

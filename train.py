@@ -1,9 +1,9 @@
 import argparse
-import torch
-import os
 import json
-from pilgrim import Trainer, Pilgrim
-from pilgrim import count_parameters, generate_inverse_moves, load_cube_data
+import os
+
+import torch
+from pilgrim import Pilgrim, Trainer, count_parameters, generate_inverse_moves
 
 
 def save_model_id(model_id):
@@ -93,10 +93,10 @@ def main():
     args = parser.parse_args()
 
     # Set device (GPU if available, otherwise CPU)
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else "cpu", args.device_id
-    )
-    #     device = torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda", args.device_id)
+    else:
+        device = torch.device("cpu")
     print(f"Start training with {device}.")
 
     # Load group data (moves, names, target)
@@ -113,7 +113,7 @@ def main():
     n_gens = all_moves.size(0)  # Number of moves
     state_size = all_moves.size(1)  # Size of the state representation
     num_classes = torch.unique(V0).size(0)
-    print(f"Group info:")
+    print("Group info:")
     print(f"  # generators   {n_gens}")
     print(f"  # classes      {num_classes}")
     print(f"  state size     {state_size}")
@@ -157,9 +157,9 @@ def main():
 
     # Calculate the number of model parameters
     num_parameters = count_parameters(model)
-    param_million = round(
-        num_parameters / 1_000_000
-    )  # Get the number of parameters in millions
+    # param_million = round(
+    #     num_parameters / 1_000_000
+    # )  # Get the number of parameters in millions
 
     # Create the training name based on mode, hidden layers, residual blocks, and number of parameters
     name = f"p{int(args.group_id):03d}-t{int(args.target_id):03d}"
